@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信多 Agent 切换"
+  short_description: "部署和维护微信到本机多个 Agent 的桥接、独立会话与后台自启"
+  default_prompt: "使用 $wechat-agent-switch 为我的电脑配置微信多 Agent 切换，并验证真实收发。"

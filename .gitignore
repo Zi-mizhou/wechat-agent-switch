@@ -1,0 +1,11 @@
+**/node_modules/
+**/dist/
+**/.local-state/
+**/.weixin-codex/
+**/runtime-cache/
+**/*.dpapi
+**/*.log
+**/inject.ndjson
+**/.env
+**/.env.*
+**/__pycache__/

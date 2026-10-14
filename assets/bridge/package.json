@@ -1,0 +1,52 @@
+{
+  "name": "@zk-experiment/weixin-codex-bridge",
+  "version": "0.1.0",
+  "description": "Bridge personal Weixin messages to a local Codex app-server or CLI session.",
+  "type": "module",
+  "homepage": "https://github.com/zktww/weixin-codex-bridge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zktww/weixin-codex-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zktww/weixin-codex-bridge/issues"
+  },
+  "bin": {
+    "codex-weixin": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node tests/menu.mjs && node tests/model-selection.mjs",
+    "test:menu": "node tests/menu.mjs",
+    "verify": "npm run typecheck && npm run build",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js start",
+    "doctor": "node dist/cli.js doctor",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "codex",
+    "weixin",
+    "wechat",
+    "bridge",
+    "daemon"
+  ],
+  "license": "MIT"
+}

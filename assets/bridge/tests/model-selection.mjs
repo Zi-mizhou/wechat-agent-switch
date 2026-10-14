@@ -1,0 +1,18 @@
+import fs from'node:fs';import os from'node:os';import path from'node:path';import assert from'node:assert/strict';
+import{WorkBuddyAdapter}from'../dist/workbuddy.js';import{CodexAppServerAdapter}from'../dist/codex-app-server.js';import{OpenClawAdapter}from'../dist/openclaw.js';
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'wechat-model-contract-'));const state=path.join(root,'.local-state');fs.mkdirSync(state);
+const product=path.join(root,'product.json');fs.writeFileSync(product,JSON.stringify({models:[{id:'baseline',name:'Baseline',isDefault:true},{id:'chosen',name:'Chosen'}]}));
+fs.writeFileSync(path.join(state,'workbuddy-hosts.json'),JSON.stringify({international:{product}}));
+const wrapper=path.join(root,'probe.mjs');fs.writeFileSync(wrapper,`const a=process.argv.slice(2);const i=a.indexOf('--model');console.log(JSON.stringify([{providerData:{model:i<0?'baseline':a[i+1]}},{type:'result',subtype:'success',is_error:false,result:JSON.stringify(a)}]));`);
+const config={stateDir:state,defaultCwd:root,codexBin:process.execPath,codexModel:'configured-default',codexReasoningEffort:'xhigh',workbuddy:{wrapper,node:process.execPath}};
+const wb=new WorkBuddyAdapter(config,'international');const id=await wb.startThread();
+const initial=JSON.parse((await wb.sendTurn(id,'test')).text);assert.equal(initial.includes('--model'),false);
+const chosen=JSON.parse((await wb.sendTurn(id,'test',[],{model:'chosen'})).text);assert.equal(chosen[chosen.indexOf('--model')+1],'chosen');assert.ok(chosen.includes('--resume'));
+const restored=new WorkBuddyAdapter(config,'international');const reset=JSON.parse((await restored.sendTurn(id,'test')).text);assert.equal(reset[reset.indexOf('--model')+1],'baseline');
+const codex=new CodexAppServerAdapter(config);let params;
+codex.rpc={request:async(method,p)=>{if(method==='turn/start'){params=p;codex.emit('notification',{method:'turn/completed',params:{turn:{status:'completed'}}});return{turn:{id:'test'}};}return{};}};
+await codex.sendTurn('thread','test',[],{model:'chosen',effort:'low'});assert.equal(params.model,'chosen');assert.equal(params.effort,'low');
+const claw=new OpenClawAdapter({...config,openclaw:{node:process.execPath,entry:'unused',agentId:'main'}});const clawId=await claw.startThread();
+const patches=[];claw.gateway=async(method,p)=>{patches.push(p);};await claw.selectModel(clawId,'provider/chosen');await claw.selectModel(clawId);assert.equal(patches[1].model,null);
+claw.gateway=async()=>{throw Error('permission denied')};await assert.rejects(claw.selectModel(clawId,'provider/blocked'));assert.equal(claw.sessions[clawId].requestedModel,undefined);
+console.log('PASS_MODEL_CONTRACTS: native CLI model flags, resume/default restoration, Codex per-turn model/effort, OpenClaw session-only reset and failure atomicity');
